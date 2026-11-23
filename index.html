@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Banjo Drive Lab</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Banjo Drive Lab</h1>
+    <p class="sub">Place every note to the millisecond and hear where bluegrass drive comes from.</p>
+  </header>
+
+  <main>
+    <section class="panel transport">
+      <div class="row">
+        <button id="play" class="primary" title="Space bar">▶ Play</button>
+        <div class="beats" id="beats" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <div id="nowPlaying" class="now">Now playing: Live</div>
+      </div>
+      <div class="grid4">
+        <label class="ctl">
+          <span class="ctl-label">Tempo (quarter-note BPM)</span>
+          <span class="ctl-inputs"><input type="range" id="bpm" min="60" max="320" step="1"><input type="number" id="bpmNum" min="60" max="320" step="1"></span>
+        </label>
+        <label class="ctl">
+          <span class="ctl-label">Band swing (bass, guitar, mandolin) %</span>
+          <span class="ctl-inputs"><input type="range" id="bandSwing" min="50" max="75" step="0.5"><input type="number" id="bandSwingNum" min="50" max="75" step="0.5"></span>
+        </label>
+        <label class="ctl">
+          <span class="ctl-label">Chord progression (one chord per bar)</span>
+          <input type="text" id="progression" spellcheck="false">
+          <span class="hint" id="progHint">Chords: G C D A E F Am Em</span>
+        </label>
+        <label class="ctl">
+          <span class="ctl-label">Master volume</span>
+          <span class="ctl-inputs"><input type="range" id="masterVol" min="0" max="1.5" step="0.01"><input type="number" id="masterVolNum" min="0" max="1.5" step="0.01"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Presets</h2>
+      <p class="hint">Presets reset timing (swing, offsets, scatter) but keep tempo, chords, volumes and mutes.</p>
+      <div id="presets" class="presets"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Where the notes land <span class="muted">(one beat, zoomed)</span></h2>
+      <canvas id="diagram"></canvas>
+      <div id="readout" class="readout"></div>
+    </section>
+
+    <section id="instruments" class="instruments"></section>
+
+    <section class="panel abx">
+      <h2>Blind test (ABX)</h2>
+      <p class="hint">Save two settings as A and B, then listen to X (secretly A or B) and guess which it is.
+        If you can't beat chance, you can't reliably hear the difference. Changes take effect at the next bar line,
+        and the controls keep showing your live settings, so they don't give X away.</p>
+      <div class="abx-grid">
+        <div class="abx-slot">
+          <button id="saveA">Save current as A</button>
+          <button id="playA" disabled>Play A</button>
+          <div class="abx-desc" id="descA">Empty</div>
+        </div>
+        <div class="abx-slot">
+          <button id="saveB">Save current as B</button>
+          <button id="playB" disabled>Play B</button>
+          <div class="abx-desc" id="descB">Empty</div>
+        </div>
+        <div class="abx-slot">
+          <button id="playX" disabled>Play X</button>
+          <div class="row">
+            <button id="guessA" disabled>X is A</button>
+            <button id="guessB" disabled>X is B</button>
+          </div>
+          <button id="playLive">Back to live</button>
+        </div>
+      </div>
+      <div class="abx-result" id="abxResult"></div>
+      <div class="row"><span id="abxScore" class="score">No guesses yet.</span><button id="abxReset" class="small">Reset score</button></div>
+    </section>
+
+    <section class="panel">
+      <h2>Export</h2>
+      <p class="hint">Renders the current settings to a WAV, plus a CSV with the exact onset of every note.
+        The CSV is ground truth for testing timing-analysis tools.</p>
+      <div class="row">
+        <label class="inline">Bars <input type="number" id="exportBars" min="1" max="64" value="16"></label>
+        <label class="inline">Random seed (for scatter) <input type="number" id="exportSeed" min="1" value="1"></label>
+        <button id="export">Render WAV + CSV</button>
+        <span id="exportStatus" class="muted"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Share</h2>
+      <div class="row">
+        <button id="share">Copy link to these settings</button>
+        <input type="text" id="shareUrl" readonly placeholder="Link appears here">
+        <button id="resetAll" class="small">Reset everything</button>
+      </div>
+    </section>
+
+    <section class="panel help">
+      <h2>How to read this</h2>
+      <ul>
+        <li><b>Swing %</b> is where the "&amp;" falls inside the beat: 50 = straight eighths, 66.7 = triplet swing.</li>
+        <li><b>Downbeat / offbeat offset</b> moves that instrument's on-beat or "&amp;" notes. Negative = early (pushing), positive = late (laid back).</li>
+        <li><b>Scatter</b> adds random human timing error (standard deviation in ms).</li>
+        <li>At bluegrass tempos, swinging the band to 60% while the banjo stays straight puts each banjo "&amp;" about 0.1 beat ahead. At 200 BPM that's 30 ms.</li>
+        <li>Research on timing perception suggests differences under ~10 ms are hard to hear. Use the blind test before trusting your ears.</li>
+        <li>In the default rhythm, swing is only audible in the guitar's up-strums (the "&amp;" of 2 and 4). Toggle more offbeat cells to make it more obvious.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="foot">Keyboard: <kbd>Space</kbd> play/stop. Audio is synthesized in your browser and nothing is uploaded.</footer>
+
+  <script src="js/timing.js"></script>
+  <script src="js/music.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
